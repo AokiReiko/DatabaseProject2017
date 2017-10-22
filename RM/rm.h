@@ -26,9 +26,9 @@ private:
 };
 
 class RM_FileHandle {
-  public:
-       RM_FileHandle ();                                  // Constructor
-       ~RM_FileHandle ();                                  // Destructor
+public:
+    RM_FileHandle ();                                  // Constructor
+    ~RM_FileHandle ();                                  // Destructor
     RC GetRec (const RID &rid, RM_Record &rec) const;
                                                            // Get a record
     RC InsertRec (const char *pData, RID &rid);       // Insert a new record,
@@ -52,15 +52,6 @@ public:
     RC GetNextRec   (RM_Record &rec);                  // Get next matching record
     RC CloseScan    ();                                // Terminate file scan
 };
-class RM_Record {
-  public:
-       RM_Record  ();                     // Constructor
-       ~RM_Record ();                     // Destructor
-
-    RC GetData    (char *&pData) const;   // Set pData to point to
-                                          //   the record's contents
-    RC GetRid     (RID &rid) const;       // Get the record id
-};
 class RID {
 public:
     RID ();                        // Default constructor
@@ -70,5 +61,27 @@ public:
                                              //   slot number
     RC GetPageNum (PageNum &pageNum) const;  // Return page number
     RC GetSlotNum (SlotNum &slotNum) const;  // Return slot number
+
+private:
+    PageNum pageNum;
+    SlotNum sloyNum;
 };
+class RM_Record {
+public:
+    RM_Record  ();                     // Constructor
+    ~RM_Record ();                     // Destructor
+
+    RM_Record& operator= (const RM_Record &record);
+    RC GetData    (char *&pData) const;   // Set pData to point to
+                                        //   the record's contents
+    RC GetRid     (RID &rid) const;       // Get the record id
+    // Sets the record with an RID, data contents, and its size
+    RC SetRecord (RID rec_rid, char *recData, int size);
+private:
+    RID rid;        // record RID
+    char* data;    // pointer to record data. This is stored in the
+                    // record object, where its size is malloced
+    int size;       // size of the malloc
+};
+
 #endif RM_H
