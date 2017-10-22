@@ -10,9 +10,15 @@
 class RM_FileHandle;
 class RID;
 class RM_Record;
+
+
+/* handles the creation, deletion, opening, and closing of files of records
+in the RM component. Your program should create exactly one instance of this
+class, and all requests for RM component file management should be directed 
+to that instance. */
 class RM_Manager {
 public:
-    RM_Manager (FileManager& pfm);            // Constructor
+    RM_Manager (FileManager* FM);            // Constructor
     ~RM_Manager ();                           // Destructor
     RC CreateFile (const char *fileName, int recordSize);  
                                                 // Create a new file
@@ -21,7 +27,6 @@ public:
                                                 // Open a file
     RC CloseFile (RM_FileHandle &fileHandle);  // Close a file
 private:
-    BufPageManager* BPM;
     FileManager* FM;
 };
 
@@ -52,6 +57,10 @@ public:
     RC GetNextRec   (RM_Record &rec);                  // Get next matching record
     RC CloseScan    ();                                // Terminate file scan
 };
+
+
+/*RID uniquely identifies a record within a given file, based on the record's
+ page number in the file and slot number within that page. */
 class RID {
 public:
     RID ();                        // Default constructor
@@ -64,8 +73,10 @@ public:
 
 private:
     PageNum pageNum;
-    SlotNum sloyNum;
+    SlotNum slotNum;
 };
+
+
 class RM_Record {
 public:
     RM_Record  ();                     // Constructor
