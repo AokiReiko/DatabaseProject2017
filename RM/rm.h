@@ -44,6 +44,8 @@ public:
                                                            //   return record id
     RC DeleteRec (const RID &rid);                    // Delete a record
     RC UpdateRec (const RM_Record &rec);              // Update a record
+    RC GetNextRec (PageNum page, SlotNum slot, RM_Record &rec, BufType &buf, bool nextPage)；
+                                                        //get next available record
     RC ForcePages (PageNum pageNum = ALL_PAGES) const; // Write dirty page(s)
                                                            //   to disk
 protected:
@@ -51,6 +53,7 @@ protected:
     void setHeader(const RM_FileHeader& header);
     RC getPageHeaderAndBitmap(BufType buffer, char* &bitmap, struct RM_PageHeader* &pheader);
     RC getFirstZero(char* bitmap, int recordNum, int &slot);
+    RC getNextOne(char* bitmap, int recordNum, int start, int &slot);
     RC setBitToOne(char* bitmap, int recordNum, int slot);
     RC setBitToZero(char* bitmap, int recordNum, int slot);
     RC checkIsOne(char* bitmap, int recordNum, int slot, bool &flag);
