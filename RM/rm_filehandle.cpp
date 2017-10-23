@@ -250,7 +250,7 @@ RC RM_FileHandle::UpdateRec (const RM_Record &rec) {
 }
 // Update a record
 
-RC RM_FileHandle::GetNextRec (PageNum page, SlotNum slot, RM_Record &rec, BufType &buf, bool nextPage) const {
+RC RM_FileHandle::GetNextRec (PageNum page, SlotNum slot, RM_Record &rec, BufType &buf, bool nextPage) {
     char* bitmap;
     struct RM_PageHeader* pheader;
     int result;
