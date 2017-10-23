@@ -161,9 +161,27 @@ RC RM_FileScan::OpenScan(const RM_FileHandle &fileHandle,  // Initialize file sc
 
 RC RM_FileScan::GetNextRec(RM_Record &rec) {
     if (ended || (!opened)) return -1;
-    
+    RM_Record temp;
+    while(true) {
+
+
+        if (numRecOnPage == numRecScanned) {
+            BufType b;
+            int index;
+            this->fh->BPM->getPage(,,index);
+            GetNumRecOnPage(, this->numRecOnPage);
+        }
+        
+    }
 
 }
 RC RM_FileScan::CloseScan() {
 
+}
+RC RM_FileScan::GetNumRecOnPage(BufType buff, int &numRecords) {
+    char* bitmap;
+    RM_PageHeader* pheader;
+    if (this->fh->getPageHeaderAndBitmap(buff, bitmap, pheader) != 0) return -1;
+    numRecords = pheader->recordsNum;
+    return 0;
 }

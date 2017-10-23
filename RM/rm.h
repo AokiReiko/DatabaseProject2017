@@ -48,8 +48,6 @@ public:
     RC ForcePages (PageNum pageNum = ALL_PAGES) const; // Write dirty page(s)
                                                            //   to disk
     bool readyForScan() const;
-    RC getPageInfo(const int &nextfreepage, const int&recordsNum, const int& bitmapsize, const char* &bitmap) const;
-protected:
     RC initialize(FileManager* FM, int id, string filename);
     void setHeader(const RM_FileHeader& header);
     RC getPageHeaderAndBitmap(BufType buffer, char* &bitmap, struct RM_PageHeader* &pheader);
@@ -84,6 +82,8 @@ public:
     RC CloseScan    ();                                // Terminate file scan
 
 private:
+    RC GetNumRecOnPage(BufType buff, int &numRecords);
+
     RM_FileHandle* fh;
     bool (*comparator) (void*, void*, AttrType, int);
     int offset;
