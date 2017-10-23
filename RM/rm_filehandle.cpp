@@ -57,6 +57,18 @@ RC RM_FileHandle::getFirstZero(char* bitmap, int recordNum, int &slot){
     return -1;
 }
 
+RC RM_FileHandle::getNextOne(char* bitmap, int recordNum, int start, int &slot){
+    for (int i=start;i<recordNum;i++){
+        int _byte = i/8;
+        int offset = i-8*_byte;
+        if ((~bitmap[_byte]) & (1 << offset) == 0){
+            slot = i;
+            return 0;
+        }
+    }
+    return -1;
+}
+
 RC RM_FileHandle::setBitToOne(char* bitmap, int recordNum, int slot){
     if (slot >= recordNum) return -1;
     int _byte = slot/8;
@@ -69,7 +81,7 @@ RC RM_FileHandle::setBitToZero(char* bitmap, int recordNum, int slot){
     if (slot >= recordNum) return -1;
     int _byte = slot/8;
     int offset = slot-8*_byte;
-    bitmap[_byte] = bitmap[_byte] & (!(1 << offset));
+    bitmap[_byte] = bitmap[_byte] & (~(1 << offset));
     return 0;
 }
 
@@ -88,7 +100,8 @@ RC RM_FileHandle::GetRec (const RID &rid, RM_Record &rec) const {
     }
 
     //获取page, slot
-    int page,slot;
+    PageNum page;
+    SlotNum slot;
     rid.GetPageNum(page);
     rid.GetSlotNum(slot);
 
@@ -162,7 +175,9 @@ RC RM_FileHandle::DeleteRec (const RID &rid) {
     }
 
     //定位页
-    int index,page,slot;
+    int index;
+    PageNum page;
+    SlotNum slot;
     BufType buffer;
     rid.GetPageNum(page);
     rid.GetSlotNum(slot);
@@ -204,7 +219,8 @@ RC RM_FileHandle::UpdateRec (const RM_Record &rec) {
     //获取page, slot
     RID rid;
     rec.GetRid(rid);
-    int page,slot;
+    PageNum page;
+    SlotNum slot;
     rid.GetPageNum(page);
     rid.GetSlotNum(slot);
 
@@ -233,6 +249,39 @@ RC RM_FileHandle::UpdateRec (const RM_Record &rec) {
     return 0;
 }
 // Update a record
+
+RC RM_FileHandle::GetNextRec (PageNum page, SlotNum slot, RM_Record &rec, BufType &buf, bool nextPage) const {
+    char* bitmap;
+    struct RM_PageHeader* pheader;
+    int result;
+    int index;
+    PageNum nextRecPage = page;
+    SlotNum nextRecSlot;
+
+    if (nextPage){
+        while (true){
+            nextRecPage++;
+            if (nextRecPage > fheader.numPages){     //todo: check whether to use > or >=
+                return -1;
+            }
+            buf = BPM->getPage(fileId,nextRecPage,index);
+            getPageHeaderAndBitmap(buf, bitmap, pheader);
+            if (getNextOne(bitmap,fheader.numRecordsPerPage,0,nextRecSlot) == 0){
+                break;
+            }
+        }
+    } else {
+        buf = BPM->getPage(fileId,nextRecPage,index);
+        getPageHeaderAndBitmap(buf, bitmap, pheader);
+        if (getNextOne(bitmap,fheader.numRecordsPerPage,0,nextRecSlot) != 0){
+            return -1;
+        }
+    }
+
+    RID rid(nextRecPage,nextRecSlot);
+    rec.SetRecord(rid,bitmap + (fheader.bitmapSize) + nextRecSlot * fheader.recordSize, fheader.recordSize);
+    return 0;
+}// Get next record from given page and slot
 
 RC RM_FileHandle::ForcePages (PageNum pageNum) const {
     if (!hasFileOpened) {
