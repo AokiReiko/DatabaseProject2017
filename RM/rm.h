@@ -47,9 +47,13 @@ public:
     RC ForcePages (PageNum pageNum = ALL_PAGES) const; // Write dirty page(s)
                                                            //   to disk
 protected:
-    void initialize(FileManager* FM, int id, string filename);
+    RC initialize(FileManager* FM, int id, string filename);
     void setHeader(const RM_FileHeader& header);
-
+    RC getPageHeaderAndBitmap(BufType buffer, char* &bitmap, struct RM_PageHeader* &pheader);
+    RC getFirstZero(char* bitmap, int recordNum, int &slot);
+    RC setBitToOne(char* bitmap, int recordNum, int slot);
+    RC setBitToZero(char* bitmap, int recordNum, int slot);
+    RC checkIsOne(char* bitmap, int recordNum, int slot, bool &flag);
 
 private:
     FileManager* FM;

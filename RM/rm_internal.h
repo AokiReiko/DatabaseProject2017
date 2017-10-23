@@ -9,7 +9,7 @@ typedef int SlotNum;
 #define RM_INVALID_RECORD -1
 #define RM_INVALID_RECORD_SIZE -2
 #define RM_INVALIDRID -3
-
+#define RM_NO_FREE_PAGES -4
 
 // RM_FileHeader: Header for each file
 struct RM_FileHeader {
