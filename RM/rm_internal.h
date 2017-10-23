@@ -6,6 +6,10 @@ typedef int SlotNum;
 #define RM_PAGEHEADER_SIZE sizeof(RM_PageHeader)
 #define RM_FILEHEADER_SIZE sizeof(RM_FileHeader)
 
+#define RM_INVALID_RECORD -1
+#define RM_INVALID_RECORD_SIZE -2
+#define RM_INVALIDRID -3
+
 
 // RM_FileHeader: Header for each file
 struct RM_FileHeader {

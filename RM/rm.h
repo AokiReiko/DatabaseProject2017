@@ -29,8 +29,12 @@ public:
 private:
     FileManager* FM;
 };
-
+/*The RM_FileHandle class is used to manipulate the records in an open RM 
+component file. To manipulate the records in a file, a client first creates 
+an instance of this class and passes it to the RM_Manager::OpenFile method 
+described above.*/
 class RM_FileHandle {
+friend class RM_Manager;
 public:
     RM_FileHandle ();                                  // Constructor
     ~RM_FileHandle ();                                  // Destructor
@@ -42,6 +46,17 @@ public:
     RC UpdateRec (const RM_Record &rec);              // Update a record
     RC ForcePages (PageNum pageNum = ALL_PAGES) const; // Write dirty page(s)
                                                            //   to disk
+protected:
+    void initialize(FileManager* FM, int id, string filename);
+    void setHeader(const RM_FileHeader& header);
+
+
+private:
+    FileManager* FM;
+    BufPageManager* BPM;
+    int fileId;
+    RM_FileHeader fheader;
+    string filename;
 };
 class RM_FileScan {
 public:
@@ -70,14 +85,19 @@ public:
                                              //   slot number
     RC GetPageNum (PageNum &pageNum) const;  // Return page number
     RC GetSlotNum (SlotNum &slotNum) const;  // Return slot number
+    bool isValidId();
 
 private:
     PageNum pageNum;
     SlotNum slotNum;
 };
-
-
+/*The RM_Record class defines record objects. To materialize a record, a 
+client creates an instance of this class and passes it to one of the 
+RM_FileHandle or RM_FileScan methods that reads a record (described above).
+RM_Record objects should contain copies of records from the buffer pool, 
+not records in the buffer pool itself.*/
 class RM_Record {
+friend RM_FileHandle;
 public:
     RM_Record  ();                     // Constructor
     ~RM_Record ();                     // Destructor

@@ -21,3 +21,6 @@ RC RID::GetSlotNum (SlotNum &slotNum) const {
     slotNum = this->slotNum;
     return 0;
 }
+bool RID::isValidId() {
+    return (pageNum >= 0 && slotNum >= 0);
+}
