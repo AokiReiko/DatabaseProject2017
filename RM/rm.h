@@ -35,6 +35,7 @@ an instance of this class and passes it to the RM_Manager::OpenFile method
 described above.*/
 class RM_FileHandle {
 friend class RM_Manager;
+friend class RM_FileScan;
 public:
     RM_FileHandle ();                                  // Constructor
     ~RM_FileHandle ();                                  // Destructor
@@ -46,6 +47,8 @@ public:
     RC UpdateRec (const RM_Record &rec);              // Update a record
     RC ForcePages (PageNum pageNum = ALL_PAGES) const; // Write dirty page(s)
                                                            //   to disk
+    bool readyForScan() const;
+    RC getPageInfo(const int &nextfreepage, const int&recordsNum, const int& bitmapsize, const char* &bitmap) const;
 protected:
     RC initialize(FileManager* FM, int id, string filename);
     void setHeader(const RM_FileHeader& header);
@@ -63,6 +66,9 @@ private:
     string filename;
     bool hasFileOpened;//FM默认打开一个文件，在打开别的文件初始化handler时要判断是否已经打开了
 };
+/*The RM_FileScan class provides clients the capability to perform scans over 
+the records of an RM component file, where a scan may be based on a specified 
+condition. As usual, the constructor and destructor methods are not described*/
 class RM_FileScan {
 public:
     RM_FileScan  ();                                // Constructor
@@ -76,6 +82,26 @@ public:
                     ClientHint    pinHint = NO_HINT);
     RC GetNextRec   (RM_Record &rec);                  // Get next matching record
     RC CloseScan    ();                                // Terminate file scan
+
+private:
+    RM_FileHandle* fh;
+    bool (*comparator) (void*, void*, AttrType, int);
+    int offset;
+    int length;
+    AttrType type;
+    CompOp comp_op;
+    void* value;
+
+    bool opened;
+    bool ended;
+
+    PageNum currentPage;
+    SlotNum currentSlot;
+
+    int numRecOnPage;
+    int numRecScanned;
+
+
 };
 
 
@@ -119,5 +145,10 @@ private:
                     // record object, where its size is malloced
     int size;       // size of the malloc
 };
-
+bool EQ(void* a, void* b, AttrType type, int length);
+bool NE(void* a, void* b, AttrType type, int length);
+bool LT(void* a, void* b, AttrType type, int length);
+bool LE(void* a, void* b, AttrType type, int length);
+bool GT(void* a, void* b, AttrType type, int length);
+bool GE(void* a, void* b, AttrType type, int length);
 #endif RM_H

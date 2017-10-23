@@ -243,4 +243,15 @@ RC RM_FileHandle::ForcePages (PageNum pageNum) const {
     return 0;
 }
 // Write dirty page(s)
+
+bool RM_FileHandle::readyForScan() const {
+    //必须维护了一个打开的文件而且文件的head是合法的
+    if (!hasFileOpened) return false;
+    if (this->fheader.numPages <= 0 || this->fheader.recordSize <= 0 || this-fheader.numRecordsPerPage <= 0)
+        return false;
+    return true;
+}
+RC RM_FileHandle::getPageInfo(const int &nextfreepage, const int&recordsNum, const int& bitmapsize, const char* &bitmap) const {
+    nextFreePage
+}
                                                     
