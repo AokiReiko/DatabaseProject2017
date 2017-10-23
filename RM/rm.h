@@ -57,6 +57,7 @@ private:
     int fileId;
     RM_FileHeader fheader;
     string filename;
+    bool hasFileOpened;//FM默认打开一个文件，在打开别的文件初始化handler时要判断是否已经打开了
 };
 class RM_FileScan {
 public:

@@ -47,6 +47,9 @@ RC RM_Manager::DestroyFile (const char *fileName) {
     remove(fileName);
 }// Destroy a file
 RC RM_Manager::OpenFile (const char *fileName, RM_FileHandle &fileHandle) {
+    if (fileHandle.hasFileOpened) {
+        this->CloseFile(fileHandle);
+    }
     int id;
     //文件名不合法或无法打开则返回-1
     if ( fileName == NULL || (!FM->openFile(fileName, id)))
@@ -54,6 +57,9 @@ RC RM_Manager::OpenFile (const char *fileName, RM_FileHandle &fileHandle) {
     fileHandle.initialize(FM, id, fileName);
 }// Open a file
 RC RM_Manager::CloseFile (RM_FileHandle &fileHandle) {
-    if (FM->closeFile(fileHandle.fileId)) return 0;
+    if (FM->closeFile(fileHandle.fileId)) {
+        fileHandle.hasFileOpened = false;
+        return 0;
+    }
     return -1;
 } // Close a file

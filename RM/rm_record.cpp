@@ -8,9 +8,10 @@
     int size;       // size of the malloc*/
 RM_Record::RM_Record() {
     this->size = RM_INVALID_RECORD_SIZE;
+    this->data = NULL;
 }
 RM_Record::~RM_Record() {
-    
+    if (this->data != NULL) delete[] this->data;
 }
 RM_Record& RM_Record::operator= (const RM_Record &record) {
     if (&record != this) {
@@ -46,5 +47,4 @@ RC RM_Record::SetRecord (RID rec_rid, char *recData, int size) {
     this->data = new char(size);
     memcpy(this->data, recData, size);
     return 0;
-
 }

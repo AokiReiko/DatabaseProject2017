@@ -17,9 +17,38 @@ void RM_FileHandle::initialize(FileManager* FM, int id, string filename) {
     this->BPM = new BufPageManager(FM);
     this->fileId = id;
     this->filename = filename;
+    this->hasFileOpened = true;
     //读取文件头
     int index;
     BufType b = this->BPM->allocPage(id, 0, index);
     memcpy(&this->fheader, b, RM_FILEHEADER_SIZE);
     //如果allocPage这一页无法打开
+
 }
+
+ RM_FileHandle::RM_FileHandle () {
+     this->hasFileOpened = false;
+}// Constructor
+RM_FileHandle::~RM_FileHandle () {
+}
+// Destructor
+RC RM_FileHandle::GetRec (const RID &rid, RM_Record &rec) const {
+
+}// Get a record
+RC RM_FileHandle::InsertRec (const char *pData, RID &rid) {
+
+}
+// Insert a new record, return record id
+RC RM_FileHandle::DeleteRec (const RID &rid) {
+
+}
+// Delete a record
+RC RM_FileHandle::UpdateRec (const RM_Record &rec) {
+
+}
+// Update a record
+RC RM_FileHandle::ForcePages (PageNum pageNum) const {
+
+}
+// Write dirty page(s)
+                                                    
