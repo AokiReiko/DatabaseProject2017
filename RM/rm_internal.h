@@ -21,6 +21,7 @@ struct RM_FileHeader {
   int bitmapOffset;         // location in bytes of where the bitmap starts
                             // in the page headers
   int bitmapSize;           // size of bitmaps in the page headers
+  
 };
 struct RM_PageHeader {
     int nextFreePage;
