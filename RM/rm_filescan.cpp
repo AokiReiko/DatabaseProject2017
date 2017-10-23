@@ -135,6 +135,14 @@ RC RM_FileScan::OpenScan(const RM_FileHandle &fileHandle,  // Initialize file sc
     this->type = attrType;
     this->offset = attrLength;
     this->length = attrLength;
+    this->useNextPage = true;
+    this->currentPage = 0;
+    this->currentSlot = 0;
+    this->numRecOnPage = 0;
+    this->numRecScanned = 0;
+    int index;
+    this->buff = fh->BPM->getPage(fh->fileId,currentPage,index);
+
     switch (compOp) {
         case EQ_OP:
             this->comparator = &EQ;
@@ -163,19 +171,38 @@ RC RM_FileScan::GetNextRec(RM_Record &rec) {
     if (ended || (!opened)) return -1;
     RM_Record temp;
     while(true) {
+        if (fh->GetNextRec(currentPage, currentSlot, temp, buff, useNextPage) != 0)
+            return -1;
 
-
-        if (numRecOnPage == numRecScanned) {
-            BufType b;
+        memcpy(&rec, &temp, sizeof(RM_Record));
+        temp.rid.GetPageNum(currentPage);
+        temp.rid.GetSlotNum(currentSlot);
+        if (useNextPage) {
             int index;
-            this->fh->BPM->getPage(,,index);
-            GetNumRecOnPage(, this->numRecOnPage);
+            buff = this->fh->BPM->getPage(fh->fileId,currentPage,index);
+            GetNumRecOnPage(buff,numRecOnPage);
+            useNextPage = false;
+            numRecScanned = 0;
         }
-        
+        numRecScanned++;
+        if (numRecOnPage == numRecScanned) {
+            useNextPage = true;
+        }
+        char *pData;
+        if((temp.GetData(pData)) != 0){
+            return (-1);
+        }
+        if ((* comparator)(pData + offset, this->value, type, length))
+            break;
     }
-
+    return 0;
 }
 RC RM_FileScan::CloseScan() {
+  if(opened == false){
+    return (-1);
+  }
+  opened = false;
+  return (0);
 
 }
 RC RM_FileScan::GetNumRecOnPage(BufType buff, int &numRecords) {

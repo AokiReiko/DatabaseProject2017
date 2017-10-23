@@ -97,12 +97,15 @@ private:
 
     bool opened;
     bool ended;
+    bool useNextPage;
 
     PageNum currentPage;
     SlotNum currentSlot;
 
     int numRecOnPage;
     int numRecScanned;
+
+    BufType buff;
 
 
 };
@@ -131,7 +134,9 @@ RM_FileHandle or RM_FileScan methods that reads a record (described above).
 RM_Record objects should contain copies of records from the buffer pool, 
 not records in the buffer pool itself.*/
 class RM_Record {
-friend RM_FileHandle;
+friend class RM_FileHandle;
+friend class RM_FileScan;
+
 public:
     RM_Record  ();                     // Constructor
     ~RM_Record ();                     // Destructor
