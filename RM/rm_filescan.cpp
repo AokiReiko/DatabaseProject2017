@@ -1,6 +1,6 @@
 #include "rm.h"
 
-bool RM_FileScan::EQ(void* a, void* b, AttrType type, int length) {
+bool EQ(void* a, void* b, AttrType type, int length) {
     switch (type) {
         case INT_T: 
             return (*((int*)a)) == (*((int*)b));
@@ -18,7 +18,7 @@ bool RM_FileScan::EQ(void* a, void* b, AttrType type, int length) {
             return false;
     }
 }
-bool RM_FileScan::NE(void* a, void* b, AttrType type, int length) {
+bool NE(void* a, void* b, AttrType type, int length) {
    switch (type) {
         case INT_T: 
             return (*((int*)a)) != (*((int*)b));
@@ -36,7 +36,7 @@ bool RM_FileScan::NE(void* a, void* b, AttrType type, int length) {
             return false;
     }
 }
-bool RM_FileScan::LT(void* a, void* b, AttrType type, int length) {
+bool LT(void* a, void* b, AttrType type, int length) {
     switch (type) {
         case INT_T: 
             return (*((int*)a)) < (*((int*)b));
@@ -54,7 +54,7 @@ bool RM_FileScan::LT(void* a, void* b, AttrType type, int length) {
             return false;
     }
 }
-bool RM_FileScan::LE(void* a, void* b, AttrType type, int length) {
+bool LE(void* a, void* b, AttrType type, int length) {
     switch (type) {
         case INT_T: 
             return (*((int*)a)) <= (*((int*)b));
@@ -72,7 +72,7 @@ bool RM_FileScan::LE(void* a, void* b, AttrType type, int length) {
             return false;
     }
 }
-bool RM_FileScan::GT(void* a, void* b, AttrType type, int length) {
+bool GT(void* a, void* b, AttrType type, int length) {
     switch (type) {
         case INT_T: 
             return (*((int*)a)) > (*((int*)b));
@@ -90,7 +90,7 @@ bool RM_FileScan::GT(void* a, void* b, AttrType type, int length) {
             return false;
     }
 }
-bool RM_FileScan::GE(void* a, void* b, AttrType type, int length) {
+bool GE(void* a, void* b, AttrType type, int length) {
     switch (type) {
         case INT_T: 
             return (*((int*)a)) >= (*((int*)b));
@@ -171,8 +171,11 @@ RC RM_FileScan::GetNextRec(RM_Record &rec) {
     if (ended || (!opened)) return -1;
     RM_Record temp;
     while(true) {
-        if (fh->GetNextRec(currentPage, currentSlot, temp, buff, useNextPage) != 0)
+        if (fh->GetNextRec(currentPage, currentSlot, temp, buff, useNextPage) != 0) {
+            ended = true;
             return -1;
+        }
+           
 
         memcpy(&rec, &temp, sizeof(RM_Record));
         temp.rid.GetPageNum(currentPage);
@@ -183,6 +186,7 @@ RC RM_FileScan::GetNextRec(RM_Record &rec) {
             GetNumRecOnPage(buff,numRecOnPage);
             useNextPage = false;
             numRecScanned = 0;
+            currentPage++;
         }
         numRecScanned++;
         if (numRecOnPage == numRecScanned) {

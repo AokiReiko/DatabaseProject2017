@@ -31,4 +31,4 @@ int calcRecNumPerPage(int recordSize);
 int calcBitmapSize(int recordSize);
 
 
-#endif RMINTERNAL_H
+#endif 

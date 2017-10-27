@@ -45,7 +45,7 @@ public:
                                                            //   return record id
     RC DeleteRec (const RID &rid);                    // Delete a record
     RC UpdateRec (const RM_Record &rec);              // Update a record
-    RC GetNextRec (PageNum page, SlotNum slot, RM_Record &rec, BufType &buf, bool nextPage)；
+    RC GetNextRec (PageNum page, SlotNum slot, RM_Record &rec, BufType &buf, bool nextPage);
                                                         //get next available record
     RC ForcePages (PageNum pageNum = ALL_PAGES) const; // Write dirty page(s)
                                                            //   to disk
@@ -159,4 +159,4 @@ bool LT(void* a, void* b, AttrType type, int length);
 bool LE(void* a, void* b, AttrType type, int length);
 bool GT(void* a, void* b, AttrType type, int length);
 bool GE(void* a, void* b, AttrType type, int length);
-#endif RM_H
+#endif 
