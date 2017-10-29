@@ -52,12 +52,13 @@ public:
     bool readyForScan() const;
     RC initialize(FileManager* FM, int id, string filename);
     void setHeader(const RM_FileHeader& header);
-    RC getPageHeaderAndBitmap(BufType buffer, char* &bitmap, struct RM_PageHeader* &pheader);
-    RC getFirstZero(char* bitmap, int recordNum, int &slot);
-    RC getNextOne(char* bitmap, int recordNum, int start, int &slot);
+    RC getPageHeaderAndBitmap(BufType buffer, char* &bitmap, struct RM_PageHeader* &pheader) const;
+    RC getFirstZero(char* bitmap, int recordNum, int &slot) const;
+    RC getNextOne(char* bitmap, int recordNum, int start, int &slot) const;
     RC setBitToOne(char* bitmap, int recordNum, int slot);
     RC setBitToZero(char* bitmap, int recordNum, int slot);
-    RC checkIsOne(char* bitmap, int recordNum, int slot, bool &flag);
+    RC checkIsOne(char* bitmap, int recordNum, int slot, bool &flag) const;
+    RC getPageInfo(const int &nextfreepage, const int&recordsNum, const int& bitmapsize, const char* &bitmap) const;
 
 private:
     FileManager* FM;

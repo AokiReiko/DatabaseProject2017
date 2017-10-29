@@ -1,4 +1,5 @@
 #include "rm.h"
+#include <memory.h>
 
 void RM_FileHandle::setHeader(const RM_FileHeader& header) {
     this->fheader.recordSize = header.recordSize;           
@@ -39,13 +40,13 @@ RM_FileHandle::~RM_FileHandle () {
 }
 // Destructor
 
-RC RM_FileHandle::getPageHeaderAndBitmap(BufType buffer, char* &bitmap, struct RM_PageHeader* &pheader){
+RC RM_FileHandle::getPageHeaderAndBitmap(BufType buffer, char* &bitmap, struct RM_PageHeader* &pheader) const {
     pheader = (struct RM_PageHeader*)(buffer);
-    bitmap = pheader+fheader.bitmapOffset;
+    bitmap = (char*)(pheader+fheader.bitmapOffset);
     return 0;
 }
 
-RC RM_FileHandle::getFirstZero(char* bitmap, int recordNum, int &slot){
+RC RM_FileHandle::getFirstZero(char* bitmap, int recordNum, int &slot) const {
     for (int i=0;i<recordNum;i++){
         int _byte = i/8;
         int offset = i-8*_byte;
@@ -57,7 +58,7 @@ RC RM_FileHandle::getFirstZero(char* bitmap, int recordNum, int &slot){
     return -1;
 }
 
-RC RM_FileHandle::getNextOne(char* bitmap, int recordNum, int start, int &slot){
+RC RM_FileHandle::getNextOne(char* bitmap, int recordNum, int start, int &slot) const {
     for (int i=start;i<recordNum;i++){
         int _byte = i/8;
         int offset = i-8*_byte;
@@ -85,7 +86,7 @@ RC RM_FileHandle::setBitToZero(char* bitmap, int recordNum, int slot){
     return 0;
 }
 
-RC RM_FileHandle::checkIsOne(char* bitmap, int recordNum, int slot, bool &flag){
+RC RM_FileHandle::checkIsOne(char* bitmap, int recordNum, int slot, bool &flag) const {
     if (slot >= recordNum) return -1;
     int _byte = slot/8;
     int offset = slot-8*_byte;
@@ -107,6 +108,7 @@ RC RM_FileHandle::GetRec (const RID &rid, RM_Record &rec) const {
 
     //获取对应页数据
     BufType buffer;
+    int index;
     buffer = BPM->getPage(fileId,page,index);
     
     char* bitmap;
@@ -156,7 +158,7 @@ RC RM_FileHandle::InsertRec (const char *pData, RID &rid) {
     //添加记录
     setBitToOne(bitmap, fheader.numRecordsPerPage, slot);
     memcpy(bitmap + fheader.bitmapSize + fheader.recordSize * slot, pData, fheader.recordSize);
-    pheader.recordsNum++;
+    pheader->recordsNum++;
     rid = RID(fheader.firstFreePage,slot);
 
     //判断该页是否已满
@@ -198,7 +200,7 @@ RC RM_FileHandle::DeleteRec (const RID &rid) {
     if (setBitToZero(bitmap, fheader.numRecordsPerPage, slot) == -1){
         return -1;
     }
-    pheader.recordsNum--;
+    pheader->recordsNum--;
 
     //判断该页是否未满
     if (pheader->recordsNum != fheader.numRecordsPerPage){
@@ -226,6 +228,7 @@ RC RM_FileHandle::UpdateRec (const RM_Record &rec) {
 
     //获取对应页数据
     BufType buffer;
+    int index;
     buffer = BPM->getPage(fileId,page,index);
     
     char* bitmap;
@@ -300,7 +303,9 @@ bool RM_FileHandle::readyForScan() const {
         return false;
     return true;
 }
+
+
 RC RM_FileHandle::getPageInfo(const int &nextfreepage, const int&recordsNum, const int& bitmapsize, const char* &bitmap) const {
-    nextFreePage
+    
 }
                                                     
