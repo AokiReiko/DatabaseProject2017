@@ -99,13 +99,12 @@ int IX_IndexHandle::insertEntryIntoPage(void *pData, const RID &rid, BufType cur
             nheader->num_keys = cheader->num_keys-mid-1;
             cheader->num_keys = mid;
             nheader->isLeafNode = cheader->isLeafNode;
-            RID prid();  //todo: fill in the rid
+            RID prid();  //todo: fill in the prid(leaf: new page; internal: child page)
             memcpy(ptr,&prid,sizeof(RID));
             
             //put the mid entry into node
-            int place = getPlace(ptr+sizeof(RID)+1, curPage);
-            RID *crid = ptr;
-            insertAt(place,ptr+sizeof(RID)+1,*(crid),curPage);
+            RID crid();  //todo: fill in the crid(point to new page)
+            insertAfter(place,ptr+sizeof(RID)+1,crid,curPage);
             pheader->num_keys++;
 
             if (pheader->num_keys > header.maxKeys_N){
@@ -155,7 +154,7 @@ int IX_IndexHandle::deleteEntryFromPage(void *pData, const RID &rid, BufType cur
         int place = getPlace(pData, curPage);
         int childPageIndex;
         BufType childPage = getPageByIndex(place, curPage, childPageIndex);
-        int result = insertEntryIntoPage(pData, rid, childPage, childPageIndex);
+        int result = deleteEntryFromPage(pData, rid, childPage, childPageIndex);
         if (result == 0){
             return 0;
         } else if (result == 1){
@@ -183,7 +182,9 @@ int IX_IndexHandle::getExactPlace(void *pData, BufType curPage){
 }
 
 int IX_IndexHandle::calcSize(BufType curPage,int place){
-
+    IX_NodeHeader* pheader = (IX_NodeHeader*) curPage;
+    int delta = pheader->num_keys - place;
+    return (delta*header.attr_length+delta+(delta+1)*sizeof(RID));
 }
 
 bool IX_IndexHandle::isDataEqual(void *pData, void* comp){
@@ -191,6 +192,10 @@ bool IX_IndexHandle::isDataEqual(void *pData, void* comp){
 }
 
 int IX_IndexHandle::insertAt(int place, void *pData, const RID &rid, BufType curPage){
+
+    //before: R1 S1 D1 R2 S2 D2
+    //after: rid 'd' pData R1 S1 D1 R2 S2 D2
+
     int sizeToMove = calcSize(curPage,place);
     char* placeholder;
     char* dataStored;
@@ -202,6 +207,29 @@ int IX_IndexHandle::insertAt(int place, void *pData, const RID &rid, BufType cur
     memcpy(tmp, placeholder, sizeToMove);
     memcpy(placeholder+header.attr_length+1+sizeof(RID), tmp, sizeToMove);
     memcpy(placeholder,&rid,sizeof(RID));
+    char c = 'd';
+    memcpy(statusStored,&c,1);
+    memcpy(dataStored,pData,header.attr_length);
+    return 0;
+}
+
+int IX_IndexHandle::insertAfter(int place, void *pData, const RID &rid, BufType curPage){
+
+    //before: R1 S1 D1 R2 S2 D2
+    //after: R1 S1 D1 R2 'd' pData rid S2 D2
+
+    place += 1;
+    int sizeToMove = calcSize(curPage,place)-sizeof(RID);
+    char* placeholder;
+    char* dataStored;
+    char* statusStored;
+    getPointerAt(curPage,place,placeholder);
+    getDataAt(curPage,place,dataStored);
+    getStatusAt(curPage,place,statusStored);
+    char* tmp = (char*)malloc(sizeToMove);
+    memcpy(tmp, placeholder+sizeof(RID), sizeToMove);
+    memcpy(placeholder+sizeof(RID)+header.attr_length+1+sizeof(RID), tmp, sizeToMove);
+    memcpy(placeholder+sizeof(RID)+header.attr_length+1,&rid,sizeof(RID));
     char c = 'd';
     memcpy(statusStored,&c,1);
     memcpy(dataStored,pData,header.attr_length);
