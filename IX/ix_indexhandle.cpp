@@ -57,21 +57,17 @@ int IX_IndexHandle::insertEntryIntoPage(void *pData, const RID &rid, BufType cur
         getDataAt(curPage,place,dataStored);
         getStatusAt(curPage,place,statusStored);
         if (!(isDataEqual(pData,dataStored))){
-            char* tmp = (char*)malloc(sizeToMove);
-            memcpy(tmp, placeholder, sizeToMove);
-            memcpy(placeholder+header.attr_length+1+sizeof(RID), tmp, sizeToMove);
-            memcpy(placeholder,&rid,sizeof(RID));
-            char c = 'd';
-            memcpy(statusStored,&c,1);
-            memcpy(dataStored,pData,header.attr_length);
+            insertAt(place,pData,rid,curPage);
             pheader->num_keys++;
             BPM->markDirty(pageIndex);
-
             if (pheader->num_keys > header.maxKeys_N){
-                return 1;   //notify parent about overflow
-            } else {
-                return 0;
+                if (pageIndex == rootIndex){
+                    //deal with changed root
+                } else {
+                    return 1;   //notify parent about overflow
+                }
             }
+            return 0;
         } else if (*(statusStored) == 'd'){
             // add bucket page
         } else if (*(statusStored) == 'b'){
@@ -88,10 +84,38 @@ int IX_IndexHandle::insertEntryIntoPage(void *pData, const RID &rid, BufType cur
             return 0;
         } else if (result == 1){
             BPM->markDirty(pageIndex);
+
             //deal with overflow
-            if (pageIndex == rootIndex){
-                //deal with changed root
+            BufType newPage = BPM->allocPage();
+            //todo: deal with page headers and pagenum
+            IX_NodeHeader* cheader = (IX_NodeHeader*) childPage;
+            IX_NodeHeader* nheader = (IX_NodeHeader*) newPage;
+            int mid = cheader->num_keys/2;
+            char* start;
+            char* ptr;
+            start = newPage+cheader->header.entryOffset_N;
+            getPointerAt(childPage,mid+1,ptr);
+            memcpy(start,ptr,calcSize(childPage,mid+1));
+            nheader->num_keys = cheader->num_keys-mid-1;
+            cheader->num_keys = mid;
+            nheader->isLeafNode = cheader->isLeafNode;
+            RID prid();  //todo: fill in the rid
+            memcpy(ptr,&prid,sizeof(RID));
+            
+            //put the mid entry into node
+            int place = getPlace(ptr+sizeof(RID)+1, curPage);
+            RID *crid = ptr;
+            insertAt(place,ptr+sizeof(RID)+1,*(crid),curPage);
+            pheader->num_keys++;
+
+            if (pheader->num_keys > header.maxKeys_N){
+                if (pageIndex == rootIndex){
+                    //deal with changed root
+                } else {
+                    return 1;   //notify parent about overflow
+                }
             }
+            
         }
     }
 
@@ -164,4 +188,22 @@ int IX_IndexHandle::calcSize(BufType curPage,int place){
 
 bool IX_IndexHandle::isDataEqual(void *pData, void* comp){
     
+}
+
+int IX_IndexHandle::insertAt(int place, void *pData, const RID &rid, BufType curPage){
+    int sizeToMove = calcSize(curPage,place);
+    char* placeholder;
+    char* dataStored;
+    char* statusStored;
+    getPointerAt(curPage,place,placeholder);
+    getDataAt(curPage,place,dataStored);
+    getStatusAt(curPage,place,statusStored);
+    char* tmp = (char*)malloc(sizeToMove);
+    memcpy(tmp, placeholder, sizeToMove);
+    memcpy(placeholder+header.attr_length+1+sizeof(RID), tmp, sizeToMove);
+    memcpy(placeholder,&rid,sizeof(RID));
+    char c = 'd';
+    memcpy(statusStored,&c,1);
+    memcpy(dataStored,pData,header.attr_length);
+    return 0;
 }

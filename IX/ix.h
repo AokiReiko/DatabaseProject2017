@@ -101,6 +101,7 @@ private:
     int getExactPlace(void *pData, BufType curPage);
     int calcSize(BufType curPage,int place);
     bool isDataEqual(void *pData, void* comp);
+    int insertAt(int place, void *pData, const RID &rid, BufType curPage);
 };
 
 class IX_IndexScan {
