@@ -110,11 +110,32 @@ int IX_IndexHandle::insertEntryIntoPage(void *pData, const RID &rid, BufType cur
             if (pheader->num_keys > header.maxKeys_N){
                 if (pageIndex == rootIndex){
                     //deal with changed root
+                    BufType newRootPage = BPM->allocPage(); 
+                    newPage = BPM->allocPage();
+                    //todo: deal with page headers and pagenum
+                    cheader = pheader;
+                    nheader = (IX_NodeHeader*) newPage;
+                    mid = cheader->num_keys/2;
+                    start = newPage+cheader->header.entryOffset_N;
+                    getPointerAt(curPage,mid+1,ptr);
+                    memcpy(start,ptr,calcSize(curPage,mid+1));
+                    nheader->num_keys = cheader->num_keys-mid-1;
+                    cheader->num_keys = mid;
+                    nheader->isLeafNode = cheader->isLeafNode;
+                    //todo: fill in the prid(leaf: new page; internal: child page)
+                    memcpy(ptr,&prid,sizeof(RID));
+                    
+                    //put the mid entry into node
+                    //todo: fill in the crid(point to new page)
+                    insertAfter(-1,ptr+sizeof(RID)+1,crid,newRootPage);
+                    (IX_NodeHeader*)newRootPage->num_keys++;
+                    //todo: update rootIndex
+                    return 0;
                 } else {
                     return 1;   //notify parent about overflow
                 }
             }
-            
+            return 0;
         }
     }
 
@@ -155,13 +176,53 @@ int IX_IndexHandle::deleteEntryFromPage(void *pData, const RID &rid, BufType cur
         int childPageIndex;
         BufType childPage = getPageByIndex(place, curPage, childPageIndex);
         int result = deleteEntryFromPage(pData, rid, childPage, childPageIndex);
+
+        //deal with index change
+        if (place != -1){
+            char* p;
+            getDataAt(curPage,place,p);
+            if (isDataEqual(pData,p)){
+                char* newIndex;
+                getDataAt(childPage,0,newIndex);
+                memcpy(p,newIndex,header.attr_length);
+                BPM->markDirty(pageIndex);
+            }
+        }
+
         if (result == 0){
             return 0;
         } else if (result == 1){
             BPM->markDirty(pageIndex);
             //deal with underflow
-            if (pageIndex == rootIndex){
-                //deal with changed root
+            if (place != pheader->num_keys){
+                int sibPageIndex;
+                BufType sibPage = getPageByIndex(place+1, curPage, sibPageIndex);
+                IX_NodeHeader* cheader = (IX_NodeHeader*) childPage;
+                IX_NodeHeader* sheader = (IX_NodeHeader*) sibPage;
+                char* sibStart;
+                getPointerAt(sibPage,0,sibStart);
+                char* childTail;
+                getPointerAt(sibPage,cheader->num_keys,childTail);
+                memcpy(childTail,sibStart,calcSize(sibPage,0));
+                //todo: delete sibling page & check whether will overflow
+                char* ptr;  //RID before the entry(RID<- STATUS DATA)
+                memcpy(ptr+header.attr_length+1+sizeof(RID),ptr,sizeof(RID));
+                removeAt(place,curPage);
+                pheader->num_keys--;
+                if (pheader->num_keys < header.maxKeys_N/2){
+                    if (pageIndex == rootIndex){
+                        //deal with changed root
+                        //todo: move down the root when necessary
+                        if (pheader->num_keys == 0){
+                            pheader->isEmpty = true;
+                        }
+                        return 0;
+                    } else {
+                        return 1;
+                    }
+                } else {
+                    return 0;
+                }
             }
         }
     }
@@ -212,6 +273,22 @@ int IX_IndexHandle::insertAt(int place, void *pData, const RID &rid, BufType cur
     memcpy(dataStored,pData,header.attr_length);
     return 0;
 }
+
+int IX_IndexHandle::removeAt(int place, BufType curPage){
+    
+        //before: R1 S1 D1 R2 S2 D2
+        //after: R2 S2 D2
+    
+        int sizeToRemove = calcSize(curPage,place+1);
+        char* placeholder;
+        getPointerAt(curPage,place,placeholder);
+        getDataAt(curPage,place,dataStored);
+        getStatusAt(curPage,place,statusStored);
+        char* tmp = (char*)malloc(sizeToMove);
+        memcpy(tmp, placeholder+header.attr_length+1+sizeof(RID), sizeToRemove);
+        memcpy(placeholder, tmp, sizeToRemove);
+        return 0;
+    }
 
 int IX_IndexHandle::insertAfter(int place, void *pData, const RID &rid, BufType curPage){
 
