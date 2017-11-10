@@ -131,6 +131,9 @@ public:
                    int        indexNo,
                    IX_IndexHandle &indexHandle);
   RC CloseIndex   (IX_IndexHandle &indexHandle);  // Close index
+
+private:
+    FileManager FM;
 };
 
 #endif
